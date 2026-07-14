@@ -127,9 +127,9 @@ const navItems = role === 'admin'
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-          <Outlet />
-        </Box>
+        <Box sx={{ flexGrow: 1, px: { xs: 2, md: 4 }, py: { xs: 3, md: 4 } }}>
+  <Outlet />
+</Box>
       </Box>
     </Box>
   );

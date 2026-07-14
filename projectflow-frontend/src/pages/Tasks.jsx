@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, IconButton, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, Select, MenuItem, InputLabel, FormControl,
-  Snackbar, Alert, Menu, Autocomplete, Avatar
+  Snackbar, Alert, Menu, Autocomplete, Avatar, Grid, InputAdornment,
 } from '@mui/material';
-import { Add, MoreVert, Edit, Delete } from '@mui/icons-material';
+import { Add, MoreVert, Edit, Delete, Search, Assignment, AutorenewRounded, RateReview, CheckCircle } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { getTasks, createTask, updateTask, deleteTask, getProjects, getUsers } from '../services/dataService';
 
@@ -17,6 +17,20 @@ const statusColors = {
 };
 
 const priorityColors = { 'High': '#f87171', 'Medium': '#fbbf24', 'Low': '#60a5fa' };
+
+function StatChip({ icon, label, value, color }) {
+  return (
+    <Paper sx={{ p: 2, borderRadius: '14px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ width: 38, height: 38, borderRadius: '10px', backgroundColor: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
+      </Box>
+      <Box>
+        <Typography variant="h6" fontWeight="700" sx={{ color: '#ffffff', lineHeight: 1.1 }}>{value}</Typography>
+        <Typography variant="caption" sx={{ color: '#94A3B8' }}>{label}</Typography>
+      </Box>
+    </Paper>
+  );
+}
 
 export default function Tasks() {
   const { user } = useAuth();
@@ -33,6 +47,10 @@ export default function Tasks() {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuTask, setMenuTask] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [priorityFilter, setPriorityFilter] = useState('All');
 
   const [form, setForm] = useState({
     projectId: '', title: '', description: '', priority: 'Medium', status: 'To Do', dueDate: '', assignedTo: '',
@@ -59,6 +77,22 @@ export default function Tasks() {
 
   // Members only see tasks assigned to them; Admin/PM see everything
   const visibleTasks = isMember ? tasks.filter(t => t.assignedTo === user?.userId) : tasks;
+
+  const stats = useMemo(() => ({
+    toDo: visibleTasks.filter(t => t.status === 'To Do').length,
+    inProgress: visibleTasks.filter(t => t.status === 'In Progress').length,
+    review: visibleTasks.filter(t => t.status === 'Review').length,
+    completed: visibleTasks.filter(t => t.status === 'Completed').length,
+  }), [visibleTasks]);
+
+  const filteredTasks = useMemo(() => {
+    return visibleTasks.filter((t) => {
+      const matchesSearch = t.title?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
+      const matchesPriority = priorityFilter === 'All' || t.priority === priorityFilter;
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+  }, [visibleTasks, search, statusFilter, priorityFilter]);
 
   const openCreateDialog = () => {
     setEditingTask(null);
@@ -124,23 +158,13 @@ export default function Tasks() {
 
   return (
     <Box>
-      <Box
-        sx={{
-          height: 140, borderRadius: 3, mb: 3,
-          backgroundImage: 'linear-gradient(rgba(10,10,25,0.55), rgba(10,10,25,0.75)), url(https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1200&q=80)',
-          backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', p: 3,
-        }}
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 4 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold" color="white">{isMember ? 'My Tasks' : 'Stay on Top of Your Tasks'}</Typography>
-          <Typography variant="body2" color="rgba(255,255,255,0.75)">
+          <Typography variant="h5" fontWeight="700" sx={{ color: '#ffffff' }}>{isMember ? 'My Tasks' : 'Tasks'}</Typography>
+          <Typography variant="body2" sx={{ color: '#94A3B8' }}>
             {isMember ? 'Tasks assigned to you' : 'Track progress, assign work, and hit your deadlines'}
           </Typography>
         </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold" color="white">{isMember ? 'My Tasks' : 'Tasks'}</Typography>
         {canCreateDelete && (
           <Button
             startIcon={<Add />}
@@ -156,6 +180,51 @@ export default function Tasks() {
         )}
       </Box>
 
+      <Grid container spacing={2.5} sx={{ mb: 4 }}>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<Assignment sx={{ color: 'rgba(255,255,255,0.8)' }} />} label="To Do" value={stats.toDo} color="#ffffff" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<AutorenewRounded sx={{ color: '#60a5fa' }} />} label="In Progress" value={stats.inProgress} color="#60a5fa" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<RateReview sx={{ color: '#fbbf24' }} />} label="Review" value={stats.review} color="#fbbf24" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<CheckCircle sx={{ color: '#4ade80' }} />} label="Completed" value={stats.completed} color="#4ade80" />
+        </Grid>
+      </Grid>
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <TextField
+          placeholder="Search tasks..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          size="small"
+          sx={{ flexGrow: 1, minWidth: 220, backgroundColor: '#1E293B', borderRadius: 2, input: { color: 'white' } }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ color: '#94A3B8' }} /></InputAdornment> }}
+        />
+        <FormControl size="small" sx={{ minWidth: 150, backgroundColor: '#1E293B', borderRadius: 2 }}>
+          <InputLabel sx={{ color: '#94A3B8' }}>Status</InputLabel>
+          <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)} sx={{ color: 'white' }}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="To Do">To Do</MenuItem>
+            <MenuItem value="In Progress">In Progress</MenuItem>
+            <MenuItem value="Review">Review</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150, backgroundColor: '#1E293B', borderRadius: 2 }}>
+          <InputLabel sx={{ color: '#94A3B8' }}>Priority</InputLabel>
+          <Select value={priorityFilter} label="Priority" onChange={(e) => setPriorityFilter(e.target.value)} sx={{ color: 'white' }}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="High">High</MenuItem>
+            <MenuItem value="Medium">Medium</MenuItem>
+            <MenuItem value="Low">Low</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
       <Paper sx={{ borderRadius: 3, backgroundColor: '#14142b', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
         <TableContainer sx={{ backgroundColor: '#14142b' }}>
           <Table sx={{ backgroundColor: '#14142b' }}>
@@ -167,7 +236,7 @@ export default function Tasks() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {!loading && visibleTasks.map((task) => {
+              {!loading && filteredTasks.map((task) => {
                 const style = statusColors[task.status] || statusColors['To Do'];
                 const assignee = getUserById(task.assignedTo);
                 return (
@@ -210,9 +279,11 @@ export default function Tasks() {
             </TableBody>
           </Table>
         </TableContainer>
-        {!loading && visibleTasks.length === 0 && (
+        {!loading && filteredTasks.length === 0 && (
           <Typography sx={{ color: 'rgba(255,255,255,0.5)' }} textAlign="center" py={4}>
-            {isMember ? 'No tasks assigned to you yet.' : 'No tasks yet.'}
+            {visibleTasks.length === 0
+              ? (isMember ? 'No tasks assigned to you yet.' : 'No tasks yet.')
+              : 'No tasks match your search.'}
           </Typography>
         )}
       </Paper>

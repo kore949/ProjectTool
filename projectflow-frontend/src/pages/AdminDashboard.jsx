@@ -79,6 +79,53 @@ function QuickAction({ icon, label, onClick, bg }) {
   );
 }
 
+// Simple rule-based suggestions generated from the live data — no backend needed.
+function buildRecommendations({ overdue, toDo, inProgress, projects, tasks }) {
+  const recs = [];
+
+  if (overdue > 0) {
+    recs.push({
+      level: 'warning',
+      text: `${overdue} task${overdue > 1 ? 's are' : ' is'} overdue. Review and reprioritize with the assignees.`,
+    });
+  }
+
+  const staleProjects = projects.filter((p) => !tasks.some((t) => t.projectId === p.projectId));
+  if (staleProjects.length > 0) {
+    recs.push({
+      level: 'info',
+      text: `${staleProjects.length} project${staleProjects.length > 1 ? 's have' : ' has'} no tasks yet. Break the work down to get moving.`,
+    });
+  }
+
+  if (toDo > 5) {
+    recs.push({
+      level: 'info',
+      text: `${toDo} tasks are sitting in To Do. Consider assigning them to balance the team's workload.`,
+    });
+  }
+
+  const unassigned = tasks.filter((t) => !t.assignedTo && t.status !== 'Completed').length;
+  if (unassigned > 0) {
+    recs.push({
+      level: 'info',
+      text: `${unassigned} task${unassigned > 1 ? 's are' : ' is'} unassigned. Assign an owner so nothing slips through.`,
+    });
+  }
+
+  if (recs.length === 0) {
+    recs.push({ level: 'success', text: 'Everything looks on track — no overdue tasks or idle projects right now.' });
+  }
+
+  return recs.slice(0, 4);
+}
+
+const recLevelStyle = {
+  warning: { icon: <WarningAmber sx={{ color: '#f87171' }} />, bg: 'rgba(239,68,68,0.1)' },
+  info: { icon: <Description sx={{ color: '#60a5fa' }} />, bg: 'rgba(59,130,246,0.1)' },
+  success: { icon: <CheckCircle sx={{ color: '#4ade80' }} />, bg: 'rgba(34,197,94,0.1)' },
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -135,6 +182,8 @@ export default function Dashboard() {
     return { day, tasks: count };
   });
 
+  const recommendations = buildRecommendations({ overdue, toDo, inProgress, projects, tasks });
+
   const upcomingDeadlines = tasks
     .filter(t => t.dueDate && t.status !== 'Completed')
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
@@ -173,7 +222,7 @@ export default function Dashboard() {
 
   return (
     <Box sx={{ fontFamily: 'Poppins, sans-serif' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 4 }}>
         <Box>
           <Typography variant="h5" fontWeight="700" sx={{ color: '#ffffff' }}>
             {getGreeting()}, {user?.fullName?.split(' ')[0]} 👋
@@ -188,7 +237,7 @@ export default function Dashboard() {
         </Box>
       </Box>
 
-      <Grid container spacing={2.5} mb={3}>
+      <Grid container spacing={3} mb={4}>
         <Grid item xs={12} sm={6} md={2.4}>
           <StatCard icon={<Folder sx={{ color: '#818cf8' }} />} iconBg="rgba(99,102,241,0.15)" label="Total Projects" value={totalProjects} change="12%" changeUp sparkColor="#6366F1" onClick={() => navigate('/projects')} />
         </Grid>
@@ -206,7 +255,7 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5} mb={3}>
+      <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)', height: '100%' }}>
             <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={2}>Project Overview</Typography>
@@ -283,7 +332,7 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5} mb={3}>
+      <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -346,7 +395,7 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5}>
+      <Grid container spacing={3}>
         <Grid item xs={12} md={5}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)', height: '100%' }}>
             <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={2}>Team Performance</Typography>
@@ -400,6 +449,30 @@ export default function Dashboard() {
               <QuickAction icon={<Description sx={{ color: '#fbbf24' }} />} bg="rgba(245,158,11,0.15)" label="Generate Report" onClick={() => navigate('/reports')} />
               <QuickAction icon={<UploadFile sx={{ color: '#60a5fa' }} />} bg="rgba(59,130,246,0.15)" label="Upload File" onClick={() => navigate('/files')} />
             </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3} sx={{ mt: 4 }}>
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Assignment sx={{ color: '#fbbf24' }} />
+              <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }}>Recommendations</Typography>
+            </Box>
+            <Grid container spacing={2}>
+              {recommendations.map((rec, i) => {
+                const style = recLevelStyle[rec.level];
+                return (
+                  <Grid item xs={12} md={6} key={i}>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', p: 2, borderRadius: '12px', backgroundColor: style.bg }}>
+                      {style.icon}
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>{rec.text}</Typography>
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Paper>
         </Grid>
       </Grid>

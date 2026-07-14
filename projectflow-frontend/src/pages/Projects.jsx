@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, IconButton, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, Snackbar, Alert, Menu, MenuItem
+  DialogActions, TextField, Snackbar, Alert, Menu, MenuItem, Grid,
+  InputAdornment, Select, FormControl, InputLabel,
 } from '@mui/material';
-import { Add, MoreVert, Edit, Delete } from '@mui/icons-material';
+import { Add, MoreVert, Edit, Delete, Search, Folder, CheckCircle, WarningAmber } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { getProjects, createProject, updateProject, deleteProject } from '../services/dataService';
 
@@ -14,6 +15,20 @@ const statusColors = {
   'On Hold': { bg: 'rgba(245,158,11,0.15)', color: '#fbbf24' },
   'Cancelled': { bg: 'rgba(239,68,68,0.15)', color: '#f87171' },
 };
+
+function StatChip({ icon, label, value, color }) {
+  return (
+    <Paper sx={{ p: 2, borderRadius: '14px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ width: 38, height: 38, borderRadius: '10px', backgroundColor: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
+      </Box>
+      <Box>
+        <Typography variant="h6" fontWeight="700" sx={{ color: '#ffffff', lineHeight: 1.1 }}>{value}</Typography>
+        <Typography variant="caption" sx={{ color: '#94A3B8' }}>{label}</Typography>
+      </Box>
+    </Paper>
+  );
+}
 
 export default function Projects() {
   const { user } = useAuth();
@@ -27,6 +42,9 @@ export default function Projects() {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuProject, setMenuProject] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const [form, setForm] = useState({ name: '', description: '', startDate: '', endDate: '' });
 
@@ -100,29 +118,29 @@ export default function Projects() {
     }
   };
 
+  const stats = useMemo(() => ({
+    total: projects.length,
+    active: projects.filter((p) => p.status === 'Active').length,
+    completed: projects.filter((p) => p.status === 'Completed').length,
+    onHold: projects.filter((p) => p.status === 'On Hold').length,
+  }), [projects]);
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((p) => {
+      const matchesSearch = p.name?.toLowerCase().includes(search.toLowerCase())
+        || p.description?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [projects, search, statusFilter]);
+
   return (
     <Box>
-      <Box
-        sx={{
-          height: 140,
-          borderRadius: 3,
-          mb: 3,
-          backgroundImage: 'linear-gradient(rgba(10,10,25,0.65), rgba(10,10,25,0.85)), url(https://images.unsplash.com/photo-1611224923853-80b023f02d71?auto=format&fit=crop&w=1200&q=80)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          display: 'flex',
-          alignItems: 'flex-end',
-          p: 3,
-        }}
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 4 }}>
         <Box>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: '#ffffff' }}>Plan, Track, Deliver</Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)' }}>Manage all your projects in one place</Typography>
+          <Typography variant="h5" fontWeight="700" sx={{ color: '#ffffff' }}>Projects</Typography>
+          <Typography variant="body2" sx={{ color: '#94A3B8' }}>Plan, track, and deliver all your projects in one place</Typography>
         </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold" color="white">Projects</Typography>
         {canManage && (
           <Button
             startIcon={<Add />}
@@ -138,6 +156,42 @@ export default function Projects() {
         )}
       </Box>
 
+      <Grid container spacing={2.5} sx={{ mb: 4 }}>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<Folder sx={{ color: '#a78bfa' }} />} label="Total Projects" value={stats.total} color="#a78bfa" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<CheckCircle sx={{ color: '#4ade80' }} />} label="Active" value={stats.active} color="#4ade80" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<WarningAmber sx={{ color: '#fbbf24' }} />} label="On Hold" value={stats.onHold} color="#fbbf24" />
+        </Grid>
+        <Grid item xs={6} md={3}>
+          <StatChip icon={<CheckCircle sx={{ color: '#60a5fa' }} />} label="Completed" value={stats.completed} color="#60a5fa" />
+        </Grid>
+      </Grid>
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <TextField
+          placeholder="Search projects..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          size="small"
+          sx={{ flexGrow: 1, minWidth: 220, backgroundColor: '#1E293B', borderRadius: 2, input: { color: 'white' } }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ color: '#94A3B8' }} /></InputAdornment> }}
+        />
+        <FormControl size="small" sx={{ minWidth: 160, backgroundColor: '#1E293B', borderRadius: 2 }}>
+          <InputLabel sx={{ color: '#94A3B8' }}>Status</InputLabel>
+          <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)} sx={{ color: 'white' }}>
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Active">Active</MenuItem>
+            <MenuItem value="On Hold">On Hold</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+            <MenuItem value="Cancelled">Cancelled</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
       <Paper sx={{ borderRadius: 3, backgroundColor: '#14142b', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
         <TableContainer sx={{ backgroundColor: '#14142b' }}>
           <Table sx={{ backgroundColor: '#14142b' }}>
@@ -149,7 +203,7 @@ export default function Projects() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {!loading && projects.map((project) => {
+              {!loading && filteredProjects.map((project) => {
                 const style = statusColors[project.status] || statusColors['Active'];
                 return (
                   <TableRow key={project.projectId} hover sx={{ backgroundColor: '#14142b' }}>
@@ -179,8 +233,10 @@ export default function Projects() {
             </TableBody>
           </Table>
         </TableContainer>
-        {!loading && projects.length === 0 && (
-          <Typography sx={{ color: 'rgba(255,255,255,0.5)' }} textAlign="center" py={4}>No projects yet.</Typography>
+        {!loading && filteredProjects.length === 0 && (
+          <Typography sx={{ color: 'rgba(255,255,255,0.5)' }} textAlign="center" py={4}>
+            {projects.length === 0 ? 'No projects yet.' : 'No projects match your search.'}
+          </Typography>
         )}
       </Paper>
 

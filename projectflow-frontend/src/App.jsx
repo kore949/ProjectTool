@@ -65,8 +65,10 @@ function AppRoutes() {
         <Route path="/team" element={<Team />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/documents" element={<Documents />} />
+        <Route path="/users" element={<Users />} />
         <Route path="/settings" element={<Settings />} />
-      </Route>
+        </Route>
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
