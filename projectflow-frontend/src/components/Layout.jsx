@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText,
@@ -9,6 +9,7 @@ import {
   Mail, InsertDriveFile, Settings, Search, Notifications, KeyboardArrowDown, Logout
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import { getUnreadMessageCount } from '../services/dataService';
 
 const drawerWidth = 240;
 
@@ -33,6 +34,19 @@ const navItems = role === 'admin'
   ? [...baseNavItems.slice(0, 1), { label: 'Users', icon: <People />, path: '/users' }, ...baseNavItems.slice(1)]
   : baseNavItems;
   const [anchorEl, setAnchorEl] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadUnread = () => {
+      getUnreadMessageCount()
+        .then((res) => { if (!cancelled) setUnreadCount(res.data?.count ?? 0); })
+        .catch(() => {});
+    };
+    loadUnread();
+    const interval = setInterval(loadUnread, 20000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logoutUser();
@@ -75,7 +89,11 @@ const navItems = role === 'admin'
                   '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
                 }}
               >
-                <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
+                  {item.label === 'Messages' && unreadCount > 0 ? (
+                    <Badge badgeContent={unreadCount} color="error">{item.icon}</Badge>
+                  ) : item.icon}
+                </ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItemButton>
             );
@@ -115,8 +133,8 @@ const navItems = role === 'admin'
                 <Search sx={{ color: 'rgba(255,255,255,0.4)', mr: 1 }} fontSize="small" />
                 <InputBase placeholder="Search projects, tasks..." sx={{ color: 'white', fontSize: '0.9rem', width: '100%' }} />
               </Box>
-              <IconButton>
-                <Badge badgeContent={3} color="error">
+              <IconButton onClick={() => navigate('/messages')}>
+                <Badge badgeContent={unreadCount} color="error">
                   <Notifications sx={{ color: 'rgba(255,255,255,0.7)' }} />
                 </Badge>
               </IconButton>

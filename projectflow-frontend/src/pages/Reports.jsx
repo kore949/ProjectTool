@@ -63,14 +63,14 @@ export default function Reports() {
       <Grid container spacing={2.5} mb={3}>
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={2}>Task Status Distribution</Typography>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={statusCounts} innerRadius={60} outerRadius={95} dataKey="value" paddingAngle={3}>
+            <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={3}>Task Status Distribution</Typography>
+            <ResponsiveContainer width="100%" height={340}>
+              <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <Pie data={statusCounts} innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
                   {statusCounts.map((entry, i) => <Cell key={i} fill={STATUS_COLORS[entry.name]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#0B1120', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} />
-                <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12 }} />
+                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 16 }} />
               </PieChart>
             </ResponsiveContainer>
           </Paper>
@@ -78,14 +78,14 @@ export default function Reports() {
 
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={2}>Task Priority Breakdown</Typography>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={priorityCounts} innerRadius={60} outerRadius={95} dataKey="value" paddingAngle={3}>
+            <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={3}>Task Priority Breakdown</Typography>
+            <ResponsiveContainer width="100%" height={340}>
+              <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <Pie data={priorityCounts} innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
                   {priorityCounts.map((entry, i) => <Cell key={i} fill={PRIORITY_COLORS[entry.name]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#0B1120', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff' }} />
-                <Legend wrapperStyle={{ color: '#94A3B8', fontSize: 12 }} />
+                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ color: '#94A3B8', fontSize: 12, paddingTop: 16 }} />
               </PieChart>
             </ResponsiveContainer>
           </Paper>

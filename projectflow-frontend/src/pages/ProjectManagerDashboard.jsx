@@ -16,7 +16,7 @@ const statusColors = {
 const priorityColors = { 'High': '#f87171', 'Medium': '#fbbf24', 'Low': '#4ade80' };
 const DONUT_COLORS = ['#8B5CF6', '#3B82F6', '#F59E0B', '#EF4444'];
 
-function StatCard({ icon, iconBg, label, value, change, changeUp, onClick }) {
+function StatCard({ icon, iconBg, label, value, onClick }) {
   return (
     <Paper
       onClick={onClick}
@@ -26,16 +26,13 @@ function StatCard({ icon, iconBg, label, value, change, changeUp, onClick }) {
         '&:hover': onClick ? { transform: 'translateY(-3px)', boxShadow: '0 8px 24px rgba(99,102,241,0.15)' } : {},
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
         <Box sx={{ width: 40, height: 40, borderRadius: '12px', backgroundColor: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {icon}
         </Box>
         <Typography variant="body2" sx={{ color: '#94A3B8' }}>{label}</Typography>
       </Box>
-      <Typography variant="h4" fontWeight="700" sx={{ color: '#ffffff', mb: 0.5 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color: changeUp ? '#4ade80' : '#f87171' }}>
-        {changeUp ? '↑' : '↓'} {change} from last month
-      </Typography>
+      <Typography variant="h4" fontWeight="700" sx={{ color: '#ffffff' }}>{value}</Typography>
     </Paper>
   );
 }
@@ -130,8 +127,8 @@ export default function ProjectManagerDashboard() {
     <Box sx={{ fontFamily: 'Poppins, sans-serif' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box>
-          <Typography variant="h5" fontWeight="700" sx={{ color: '#ffffff' }}>
-            {getGreeting()}, {user?.fullName?.split(' ')[0]} 👋
+          <Typography variant="h5" fontWeight="700" sx={{ color: '#ffffff', fontFamily: 'Quicksand, sans-serif', letterSpacing: 0.3 }}>
+            {getGreeting()}, {user?.fullName?.split(' ')[0]} 👋😊
           </Typography>
           <Typography variant="body2" sx={{ color: '#94A3B8' }}>
             Here's an overview of your projects and team activities.
@@ -145,27 +142,27 @@ export default function ProjectManagerDashboard() {
 
       <Grid container spacing={2.5} mb={3}>
         <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard icon={<Folder sx={{ color: '#818cf8' }} />} iconBg="rgba(99,102,241,0.15)" label="My Projects" value={myProjects.length} change="14%" changeUp onClick={() => navigate('/projects')} />
+          <StatCard icon={<Folder sx={{ color: '#818cf8' }} />} iconBg="rgba(99,102,241,0.15)" label="My Projects" value={myProjects.length} onClick={() => navigate('/projects')} />
         </Grid>
         <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard icon={<CheckCircle sx={{ color: '#4ade80' }} />} iconBg="rgba(34,197,94,0.15)" label="Tasks Completed" value={tasksCompleted} change="16%" changeUp onClick={() => navigate('/tasks')} />
+          <StatCard icon={<CheckCircle sx={{ color: '#4ade80' }} />} iconBg="rgba(34,197,94,0.15)" label="Tasks Completed" value={tasksCompleted} onClick={() => navigate('/tasks')} />
         </Grid>
         <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard icon={<AutorenewRounded sx={{ color: '#fbbf24' }} />} iconBg="rgba(245,158,11,0.15)" label="In Progress" value={inProgress} change="8%" changeUp onClick={() => navigate('/tasks')} />
+          <StatCard icon={<AutorenewRounded sx={{ color: '#fbbf24' }} />} iconBg="rgba(245,158,11,0.15)" label="In Progress" value={inProgress} onClick={() => navigate('/tasks')} />
         </Grid>
         <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard icon={<WarningAmber sx={{ color: '#f87171' }} />} iconBg="rgba(239,68,68,0.15)" label="Overdue Tasks" value={overdue} change="6%" changeUp={false} onClick={() => navigate('/tasks')} />
+          <StatCard icon={<WarningAmber sx={{ color: '#f87171' }} />} iconBg="rgba(239,68,68,0.15)" label="Overdue Tasks" value={overdue} onClick={() => navigate('/tasks')} />
         </Grid>
         <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard icon={<People sx={{ color: '#60a5fa' }} />} iconBg="rgba(59,130,246,0.15)" label="Team Members" value={teamMembers} change="12%" changeUp onClick={() => navigate('/team')} />
+          <StatCard icon={<People sx={{ color: '#60a5fa' }} />} iconBg="rgba(59,130,246,0.15)" label="Team Members" value={teamMembers} onClick={() => navigate('/team')} />
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5} mb={3}>
+      <Grid container spacing={2.5} sx={{ mb: 6, mt: 1 }}>
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)', height: '100%' }}>
-            <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={2}>Project Overview</Typography>
-            <Box sx={{ position: 'relative', height: 190 }}>
+            <Typography variant="h6" fontWeight="600" sx={{ color: '#ffffff' }} mb={3}>Project Overview</Typography>
+            <Box sx={{ position: 'relative', height: 220, py: 1 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={donutData} innerRadius={62} outerRadius={85} dataKey="value" paddingAngle={3}>
@@ -230,7 +227,7 @@ export default function ProjectManagerDashboard() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2.5}>
+      <Grid container spacing={2.5} sx={{ mt: 1 }}>
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3, borderRadius: '16px', backgroundColor: '#1E293B', border: '1px solid rgba(255,255,255,0.06)' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>

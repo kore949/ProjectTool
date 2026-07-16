@@ -351,8 +351,10 @@ export default function Tasks() {
               <MenuItem value="High">High</MenuItem>
             </Select>
           </FormControl>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block', mt: 1.5, mb: 0.5 }}>Due Date</Typography>
           <TextField
-            fullWidth label="Due Date" type="date" margin="normal" InputLabelProps={{ shrink: true }}
+            fullWidth type="date"
+            sx={{ input: { color: 'white', colorScheme: 'dark' } }}
             value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
             disabled={!canCreateDelete && !!editingTask}
           />

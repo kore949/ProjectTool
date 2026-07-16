@@ -3,10 +3,11 @@ import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, TextField, InputAdornment, Dialog, DialogTitle,
   DialogContent, DialogActions, Select, MenuItem, InputLabel, FormControl,
-  Snackbar, Alert, Switch, Avatar
+  Snackbar, Alert, Switch, Avatar, IconButton, Tooltip
 } from '@mui/material';
-import { Add, Search } from '@mui/icons-material';
-import { getUsers, createUser, bulkSetUserStatus } from '../services/dataService';
+import { Add, Search, Delete } from '@mui/icons-material';
+import { getUsers, createUser, bulkSetUserStatus, deleteUserAdmin } from '../services/dataService';
+import { useAuth } from '../context/AuthContext';
 
 const roleColors = {
   'Admin': { bg: 'rgba(239,68,68,0.15)', color: '#f87171' },
@@ -15,10 +16,12 @@ const roleColors = {
 };
 
 export default function Users() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [form, setForm] = useState({ fullName: '', email: '', password: '', role: 'Team Member' });
 
@@ -48,6 +51,18 @@ export default function Users() {
       loadUsers();
     } catch (err) {
       setSnackbar({ open: true, message: 'Failed to update status', severity: 'error' });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteUserAdmin(deleteTarget.userId);
+      setSnackbar({ open: true, message: `${deleteTarget.fullName} was removed`, severity: 'success' });
+      setDeleteTarget(null);
+      loadUsers();
+    } catch (err) {
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to remove user', severity: 'error' });
     }
   };
 
@@ -109,7 +124,7 @@ export default function Users() {
           <Table>
             <TableHead>
               <TableRow>
-                {['User', 'Email', 'Role', 'Status', 'Active/Inactive'].map(h => (
+                {['User', 'Email', 'Role', 'Status', 'Active/Inactive', 'Remove'].map(h => (
                   <TableCell key={h} sx={{ color: '#94A3B8', borderColor: 'rgba(255,255,255,0.08)' }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -144,6 +159,20 @@ export default function Users() {
                     <TableCell sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                       <Switch checked={u.isActive} onChange={() => handleToggleActive(u)} color="success" />
                     </TableCell>
+                    <TableCell sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                      <Tooltip title={u.userId === currentUser?.userId ? "You can't remove your own account" : 'Remove user'}>
+                        <span>
+                          <IconButton
+                            size="small"
+                            disabled={u.userId === currentUser?.userId}
+                            onClick={() => setDeleteTarget(u)}
+                            sx={{ color: '#f87171', '&:hover': { backgroundColor: 'rgba(239,68,68,0.12)' } }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -173,6 +202,19 @@ export default function Users() {
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleCreate} variant="contained">Create User</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Remove User</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Are you sure you want to permanently remove <strong>{deleteTarget?.fullName}</strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button onClick={handleDelete} variant="contained" color="error">Remove</Button>
         </DialogActions>
       </Dialog>
 

@@ -260,12 +260,16 @@ export default function Projects() {
             fullWidth label="Description" margin="normal" multiline rows={3} value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block', mt: 1.5, mb: 0.5 }}>Start Date</Typography>
           <TextField
-            fullWidth label="Start Date" type="date" margin="normal" InputLabelProps={{ shrink: true }}
+            fullWidth type="date"
+            sx={{ input: { color: 'white', colorScheme: 'dark' } }}
             value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })}
           />
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block', mt: 1.5, mb: 0.5 }}>End Date</Typography>
           <TextField
-            fullWidth label="End Date" type="date" margin="normal" InputLabelProps={{ shrink: true }}
+            fullWidth type="date"
+            sx={{ input: { color: 'white', colorScheme: 'dark' } }}
             value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })}
           />
         </DialogContent>
